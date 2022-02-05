@@ -1,0 +1,4 @@
+/venv_aip
+/dataset
+/pytorch/data
+*.pyc
