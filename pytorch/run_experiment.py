@@ -2,6 +2,7 @@ import os
 from clearml import Task, Logger
 from config_aip import cfg_clearml, cfg_s3
 from run_training import run_training
+from args_training import get_args
 
 
 def main():
@@ -13,7 +14,8 @@ def main():
 	# task.execute_remotely(queue_name=cfg_clearml[queue_name], exit_process=True)
 
 	# train and validate
-	run_training(Logger)
+	args = get_args()
+	run_training(Logger, args)
 
 
 if __name__ == '__main__':

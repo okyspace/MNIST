@@ -35,6 +35,6 @@ def get_args():
     # pretrained weights
     parser.add_argument('--use-pretrained', action='store_true', default=False,
                         help='use pretrained weights')
-    parser.add_argument('--pretrained-weights', type=str, default='mnist.pt',help='path to pretrained weights')
+    parser.add_argument('--pretrained-weights', type=str, default='mnist.pt', help='path to pretrained weights')
 
     return parser.parse_args()

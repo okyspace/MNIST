@@ -1,13 +1,22 @@
+# TODO: to find a more correct way to fix import issue.
+import os
+import sys
+_current_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(_current_path, '..'))
+
+
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
 from network import MNISTNet
 from data import get_dataloader
-from args_training import get_args
-from utils_pytorch import load_model, save_model, write_to_tensorboard
+from utils.utils_pytorch import load_model, save_model, write_to_tensorboard
+from tempfile import gettempdir
 
 
 def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
+    print('epoch {}'.format(epoch))
     save_loss = []
 
     model.train()
@@ -65,8 +74,8 @@ def test(model, device, test_loader, epoch, logger):
         series='Test loss / correct', matrix=matrix, iteration=1)
 
 
-def get_optimizer():
-    return optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+def get_optimizer(model, lr, momentum):
+    return optim.SGD(model.parameters(), lr=lr, momentum=momentum)
 
 
 def compute_loss(output, target):
@@ -75,27 +84,28 @@ def compute_loss(output, target):
     return F.nll_loss(output, target)
 
 
-def run_training(logger):
-	args = get_args()
-	torch.manual_seed(args.seed)
-	use_cuda = not args.no_cuda and torch.cuda.is_available()
-	device = torch.device("cuda" if use_cuda else "cpu")
+def run_training(logger, args):
+    torch.manual_seed(args.seed)
+    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
 
-	# get network and optimizer
-	model = MNISTNet().to(device)
-	optimizer = get_optimizer()
+    # get network and optimizer
+    model = MNISTNet().to(device)
+    optimizer = get_optimizer(model, args.lr, args.momentum)
 
-	# load weights, where applicable
-    model = load_model(args.pretrained_weights) if args.use_pretrained
+    # load weights, where applicable
+    if args.use_pretrained:
+        model = load_model(args.pretrained_weights) 
 
-	# get data loaders
-	train_loader = get_dataloader(args.batch_size, is_train=True, to_shuffle=True)
-	test_loader = get_dataloader(args.batch_size, is_train=False, to_shuffle=True)
+    # get data loaders
+    train_loader = get_dataloader(args.batch_size, is_train=True, to_shuffle=True)
+    test_loader = get_dataloader(args.batch_size, is_train=False, to_shuffle=True)
 
 	# train and validate
-	for epoch in range(1, args.epochs + 1):
-		train(model, device, train_loader, optimizer, args.log_interval, epoch, logger)
-		test(model, device, test_loader, epoch, logger)
-		if (args.save_model):
+    print('epochs {}'.format(args.epochs + 1))
+    for epoch in range(1, args.epochs + 1):
+        train(model, device, train_loader, optimizer, epoch, args.log_interval, logger)
+        test(model, device, test_loader, epoch, logger)
+        if (args.save_model):
             save_model(model, os.path.join(gettempdir(), args.save_name))
-		logger.current_logger().report_text('The default output destination for model snapshots and artifacts is: {}'.format(model_snapshots_path ))
+        logger.current_logger().report_text('The default output destination for model snapshots and artifacts is: {}'.format(args.save_name))
