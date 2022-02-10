@@ -14,11 +14,12 @@ SET SAVE_NAME=mnist.pt
 
 REM Execute run_experiment.py to run experiment
 python run_experiment.py^
- --seed %SEED%^
- --batch-size %BATCH_SIZE%^
- --test-batch-size %TEST_BATCH_SIZE%^
- --momentum %MOMENTUM%^
- --epochs %EPOCHS%^
- --lr %LR%
- --log-interval %LOG_INTERVAL%^
+ --seed %SEED% ^
+ --batch-size %BATCH_SIZE% ^
+ --test-batch-size %TEST_BATCH_SIZE% ^
+ --momentum %MOMENTUM% ^
+ --epochs %EPOCHS% ^
+ --lr %LR% ^
+ --log-interval %LOG_INTERVAL% ^
  --save-name %SAVE_NAME%
+ 
