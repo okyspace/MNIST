@@ -19,15 +19,16 @@ def main():
     os.environ["AWS_ACCESS_KEY_ID"] = cfg_s3["aws_access_key_id"]
     os.environ["AWS_SECRET_ACCESS_KEY"] = cfg_s3["aws_secret_access_key"]
 
+    # This task runs directly via ClearML server
     Task.init(
         project_name=cfg_clearml["project_name"],
         task_name=cfg_clearml["task_name"],
         output_uri=cfg_clearml["output"],
     )
 
+    # Enable this set of codes to run via ClearML agent with docker image
     # task = Task.init(
-    #     project_name=cfg_clearml["project_name"], task_name=cfg_clearml["task_name"], \
-    # output_uri=cfg_clearml["output"]
+    #     project_name=cfg_clearml["project_name"], task_name=cfg_clearml["task_name"], output_uri=cfg_clearml["output"]
     # )
     # task.set_base_docker(cfg_clearml[docker_image])
     # task.execute_remotely(queue_name=cfg_clearml[queue_name], exit_process=True)

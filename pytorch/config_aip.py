@@ -1,7 +1,7 @@
 """Configuration settings for training the model"""
 
 cfg_clearml = {
-    "project_name": "MNIST",
+    "project_name": "MNIST_WFJ",
     "task_name": "MNIST_Training",
     "queue_name": "queue-8gb-ram",
     "output": True,
