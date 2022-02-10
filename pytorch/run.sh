@@ -1,13 +1,13 @@
 # update your hyperparams
-SEED=1
-BATCH_SIZE=32
-TEST_BATCH_SIZE=32
-MOMENTUM=0.5
-EPOCHS=3
-USE_CUDA=True
-LR=0.2
-LOG_INTERVAL=2
-SAVE_NAME=mnist.pt
+export SEED=1
+export BATCH_SIZE=32
+export TEST_BATCH_SIZE=32
+export MOMENTUM=0.5
+export EPOCHS=3
+export USE_CUDA=True
+export LR=0.2
+export LOG_INTERVAL=2
+export SAVE_NAME=mnist.pt
 
 # do not edit
 python3 run_experiment.py \

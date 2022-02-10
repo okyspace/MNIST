@@ -1,8 +1,9 @@
 # TODO: to find a more correct way to fix import issue.
 import os
 import sys
+
 _current_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(_current_path, '..'))
+sys.path.append(os.path.join(_current_path, ".."))
 
 
 import torch
@@ -16,7 +17,7 @@ from tempfile import gettempdir
 
 
 def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
-    print('epoch {}'.format(epoch))
+    print("epoch {}".format(epoch))
     save_loss = []
 
     model.train()
@@ -31,13 +32,21 @@ def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
         optimizer.step()
         if batch_idx % log_interval == 0:
             logger.current_logger().report_scalar(
-                "train", "loss", iteration=(epoch * len(train_loader) + batch_idx), value=loss.item())
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
-             # Add manual scalar reporting for loss metrics
-            logger.current_logger().report_scalar(title='Scalar example {} - epoch'.format(epoch), 
-                series='Loss', value=loss.item(), iteration=batch_idx)
+                "train", "loss", iteration=(epoch * len(train_loader) + batch_idx), value=loss.item()
+            )
+            print(
+                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+                    epoch,
+                    batch_idx * len(data),
+                    len(train_loader.dataset),
+                    100.0 * batch_idx / len(train_loader),
+                    loss.item(),
+                )
+            )
+            # Add manual scalar reporting for loss metrics
+            logger.current_logger().report_scalar(
+                title="Scalar example {} - epoch".format(epoch), series="Loss", value=loss.item(), iteration=batch_idx
+            )
 
 
 def test(model, device, test_loader, epoch, logger):
@@ -51,7 +60,7 @@ def test(model, device, test_loader, epoch, logger):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+            test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
             save_test_loss.append(test_loss)
@@ -59,19 +68,23 @@ def test(model, device, test_loader, epoch, logger):
 
     test_loss /= len(test_loader.dataset)
 
+    logger.current_logger().report_scalar("test", "loss", iteration=epoch, value=test_loss)
     logger.current_logger().report_scalar(
-        "test", "loss", iteration=epoch, value=test_loss)
-    logger.current_logger().report_scalar(
-        "test", "accuracy", iteration=epoch, value=(correct / len(test_loader.dataset)))
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
-    logger.current_logger().report_histogram(title='Histogram example', series='correct',
-        iteration=1, values=save_correct, xaxis='Test', yaxis='Correct')
-     # Manually report test loss and correct as a confusion matrix
+        "test", "accuracy", iteration=epoch, value=(correct / len(test_loader.dataset))
+    )
+    print(
+        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
+            test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
+        )
+    )
+    logger.current_logger().report_histogram(
+        title="Histogram example", series="correct", iteration=1, values=save_correct, xaxis="Test", yaxis="Correct"
+    )
+    # Manually report test loss and correct as a confusion matrix
     matrix = np.array([save_test_loss, save_correct])
-    logger.current_logger().report_confusion_matrix(title='Confusion matrix example', 
-        series='Test loss / correct', matrix=matrix, iteration=1)
+    logger.current_logger().report_confusion_matrix(
+        title="Confusion matrix example", series="Test loss / correct", matrix=matrix, iteration=1
+    )
 
 
 def get_optimizer(model, lr, momentum):
@@ -95,17 +108,19 @@ def run_training(logger, args):
 
     # load weights, where applicable
     if args.use_pretrained:
-        model = load_model(args.pretrained_weights) 
+        model = load_model(args.pretrained_weights)
 
     # get data loaders
     train_loader = get_dataloader(args.batch_size, is_train=True, to_shuffle=True)
     test_loader = get_dataloader(args.batch_size, is_train=False, to_shuffle=True)
 
-	# train and validate
-    print('epochs {}'.format(args.epochs + 1))
+    # train and validate
+    print("epochs {}".format(args.epochs + 1))
     for epoch in range(1, args.epochs + 1):
         train(model, device, train_loader, optimizer, epoch, args.log_interval, logger)
         test(model, device, test_loader, epoch, logger)
-        if (args.save_model):
+        if args.save_model:
             save_model(model, os.path.join(gettempdir(), args.save_name))
-        logger.current_logger().report_text('The default output destination for model snapshots and artifacts is: {}'.format(args.save_name))
+        logger.current_logger().report_text(
+            "The default output destination for model snapshots and artifacts is: {}".format(args.save_name)
+        )
