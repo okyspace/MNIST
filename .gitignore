@@ -1,5 +1,7 @@
 /venv_aip
 /dataset
 /pytorch/data
+/.vscode
 /.venv
 *.pyc
+/.env
