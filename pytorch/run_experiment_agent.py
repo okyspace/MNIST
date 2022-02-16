@@ -1,5 +1,5 @@
 """
-This is the main module to run the MNIST experiment via ClearML.
+This is the main module to run the MNIST experiment via ClearML agent.
 To enable this code to run you will need to do the following:
     1. Setup your environment to connect to ClearML. Follow instructions on the ClearML website
     2. Ensure config_aip.py is properly configured
@@ -19,12 +19,12 @@ def main():
     os.environ["AWS_ACCESS_KEY_ID"] = cfg_s3["aws_access_key_id"]
     os.environ["AWS_SECRET_ACCESS_KEY"] = cfg_s3["aws_secret_access_key"]
 
-    # This task runs directly via ClearML server
-    Task.init(
-        project_name=cfg_clearml["project_name"],
-        task_name=cfg_clearml["task_name"],
-        output_uri=cfg_clearml["output"],
+    # Enable this set of codes to run via ClearML agent with docker image
+    task = Task.init(
+        project_name=cfg_clearml["project_name"], task_name=cfg_clearml["task_name"], output_uri=cfg_clearml["output"]
     )
+    task.set_base_docker(cfg_clearml[docker_image])
+    task.execute_remotely(queue_name=cfg_clearml[queue_name], exit_process=True)
 
     # train and validate
     args = get_args()
