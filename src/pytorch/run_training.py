@@ -1,4 +1,4 @@
-"""This module contains the primary training code for the network model."""
+"""This module contains the primary training / testing code for the network model."""
 # Standard library imports
 import os
 from tempfile import gettempdir
@@ -6,7 +6,7 @@ from tempfile import gettempdir
 # Other library imports
 import torch
 import torch.optim as optim
-import torch.nn.functional as F
+import torch.nn.functional as torch_fn
 import numpy as np
 from pytorch.network import MNISTNet
 from pytorch.data import get_dataloader
@@ -14,9 +14,44 @@ from pytorch.data import get_dataloader
 # Local library imports
 from utils.utils_pytorch import load_model, save_model
 
+##### Public Functions #####
+def run_training(logger, args):
+    """Main training / testing orchestration function"""
+    torch.manual_seed(args.seed)
+    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+
+    # get network and optimizer
+    model = MNISTNet().to(device)
+    optimizer = _get_optimizer(model, args.learn_rate, args.momentum)
+
+    # load weights, where applicable
+    if args.use_pretrained:
+        model = load_model(args.pretrained_model_name)
+
+    # get data loaders
+    train_loader = get_dataloader(args.batch_size, is_train=True, to_shuffle=True)
+    test_loader = get_dataloader(args.batch_size, is_train=False, to_shuffle=True)
+
+    # train and validate
+    print(f"epochs {args.epochs + 1}")
+    for epoch in range(1, args.epochs + 1):
+        train(model, device, train_loader, optimizer, epoch, args.log_interval, logger)
+        # Print separating between traing and test
+        print()
+        test(model, device, test_loader, epoch, logger)
+        print()
+        if args.save_model:
+            save_model(model, os.path.join(gettempdir(), args.save_name))
+        logger.current_logger().report_text(
+            f"The default output destination for model snapshots and artifacts is: {args.save_name}"
+        )
+        print("\n")
+
 
 def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
-    print("epoch {}".format(epoch))
+    """Default training function as taken from ClearML examples."""
+    print(f"epoch {epoch}")
     save_loss = []
 
     model.train()
@@ -24,7 +59,7 @@ def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = compute_loss(output, target)
+        loss = _compute_loss(output, target)
         loss.backward()
         save_loss.append(loss)
 
@@ -33,22 +68,21 @@ def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
             logger.current_logger().report_scalar(
                 "train", "loss", iteration=(epoch * len(train_loader) + batch_idx), value=loss.item()
             )
-            print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100.0 * batch_idx / len(train_loader),
-                    loss.item(),
-                )
+            _print_training_step(
+                epoch,
+                batch_idx * len(data),
+                len(train_loader.dataset),
+                _calculate_percent(batch_idx / len(train_loader)),
+                loss.item(),
             )
             # Add manual scalar reporting for loss metrics
             logger.current_logger().report_scalar(
-                title="Scalar example {} - epoch".format(epoch), series="Loss", value=loss.item(), iteration=batch_idx
+                title=f"Scalar example {epoch} - epoch", series="Loss", value=loss.item(), iteration=batch_idx
             )
 
 
 def test(model, device, test_loader, epoch, logger):
+    """Default testing function as taken from ClearML examples."""
     save_test_loss = []
     save_correct = []
 
@@ -59,7 +93,7 @@ def test(model, device, test_loader, epoch, logger):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
+            test_loss += torch_fn.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
             save_test_loss.append(test_loss)
@@ -71,10 +105,8 @@ def test(model, device, test_loader, epoch, logger):
     logger.current_logger().report_scalar(
         "test", "accuracy", iteration=epoch, value=(correct / len(test_loader.dataset))
     )
-    print(
-        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
-            test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
-        )
+    _print_test_step(
+        test_loss, correct, len(test_loader.dataset), _calculate_percent(correct / len(test_loader.dataset))
     )
     logger.current_logger().report_histogram(
         title="Histogram example", series="correct", iteration=1, values=save_correct, xaxis="Test", yaxis="Correct"
@@ -86,40 +118,24 @@ def test(model, device, test_loader, epoch, logger):
     )
 
 
-def get_optimizer(model, lr, momentum):
-    return optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+##### Private Functions #####
+def _calculate_percent(value):
+    return 100.0 * value
 
 
-def compute_loss(output, target):
+def _print_training_step(epoch, sample_num, total_samples, percent_done, loss):
+    print(f"Train Epoch: {epoch} [{sample_num}/{total_samples} ({percent_done:.0f}%)] Loss: {loss:.6f}")
+
+
+def _print_test_step(loss, correct_samples, total_samples, percent_correct):
+    print(f"Test set: Average loss: {loss:.4f}, Accuracy: {correct_samples}/{total_samples} ({percent_correct:.0f}%)")
+
+
+def _get_optimizer(model, learn_rate, momentum):
+    return optim.SGD(model.parameters(), lr=learn_rate, momentum=momentum)
+
+
+def _compute_loss(output, target):
     # in complex case, some codes needed to extract/process data before computing the loss, thus keep it in a method
     # this method will also define the loss function
-    return F.nll_loss(output, target)
-
-
-def run_training(logger, args):
-    torch.manual_seed(args.seed)
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-
-    # get network and optimizer
-    model = MNISTNet().to(device)
-    optimizer = get_optimizer(model, args.lr, args.momentum)
-
-    # load weights, where applicable
-    if args.use_pretrained:
-        model = load_model(args.pretrained_model_name)
-
-    # get data loaders
-    train_loader = get_dataloader(args.batch_size, is_train=True, to_shuffle=True)
-    test_loader = get_dataloader(args.batch_size, is_train=False, to_shuffle=True)
-
-    # train and validate
-    print("epochs {}".format(args.epochs + 1))
-    for epoch in range(1, args.epochs + 1):
-        train(model, device, train_loader, optimizer, epoch, args.log_interval, logger)
-        test(model, device, test_loader, epoch, logger)
-        if args.save_model:
-            save_model(model, os.path.join(gettempdir(), args.save_name))
-        logger.current_logger().report_text(
-            "The default output destination for model snapshots and artifacts is: {}".format(args.save_name)
-        )
+    return torch_fn.nll_loss(output, target)

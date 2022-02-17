@@ -1,3 +1,4 @@
+"""This module contains utility codes for loading/saving pytorch models."""
 import torch
 
 from pytorch.network import MNISTNet

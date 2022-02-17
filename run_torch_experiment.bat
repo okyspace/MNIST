@@ -4,12 +4,12 @@ TITLE Calling run_experiment.py to run experiment via ClearML...
 REM Hyperparameters variables. Tweak this to change the configuration
 SET NO_CUDA=False
 SET SEED=1
-SET BATCH_SIZE=16
+SET BATCH_SIZE=32
 SET TEST_BATCH_SIZE=32
 SET MOMENTUM=0.5
-SET EPOCHS=2
-SET LR=0.2
-SET LOG_INTERVAL=2
+SET EPOCHS=3
+SET LEARN_RATE=0.2
+SET LOG_INTERVAL=100
 SET SAVE_NAME=mnist.pt
 SET USE_PRETRAINED=False
 SET PRETRAINED_MODEL_NAME=mnist.pt
@@ -25,7 +25,7 @@ SET CMD_STRING=python %~dp0%/src/pytorch/run_experiment.py^
     --test-batch-size %TEST_BATCH_SIZE% ^
     --momentum %MOMENTUM% ^
     --epochs %EPOCHS% ^
-    --lr %LR% ^
+    --learn-rate %LEARN_RATE% ^
     --log-interval %LOG_INTERVAL% ^
     --save-name %SAVE_NAME%
 
