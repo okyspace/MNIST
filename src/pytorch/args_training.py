@@ -28,8 +28,8 @@ def get_args():
     parser.add_argument("--lr", type=float, default=0.01, metavar="LR", help="learning rate (default: 0.01)")
     parser.add_argument("--momentum", type=float, default=0.5, metavar="M", help="SGD momentum (default: 0.5)")
 
-    # network params
-    # to add
+    # network params to add
+    # None
 
     # save model
     parser.add_argument("--save-model", action="store_true", default=True, help="For Saving the current Model")
@@ -37,6 +37,6 @@ def get_args():
 
     # pretrained weights
     parser.add_argument("--use-pretrained", action="store_true", default=False, help="use pretrained weights")
-    parser.add_argument("--pretrained-weights", type=str, default="mnist.pt", help="path to pretrained weights")
+    parser.add_argument("--pretrained-model-name", type=str, default="mnist.pt", help="path to pretrained weights")
 
     return parser.parse_args()

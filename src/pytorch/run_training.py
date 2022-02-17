@@ -1,19 +1,18 @@
-"""Model Training Code"""
+"""This module contains the primary training code for the network model."""
+# Standard library imports
 import os
-import sys
+from tempfile import gettempdir
 
-_current_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(_current_path, ".."))
-
-
+# Other library imports
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 from pytorch.network import MNISTNet
 from pytorch.data import get_dataloader
-from utils.utils_pytorch import load_model, save_model, write_to_tensorboard
-from tempfile import gettempdir
+
+# Local library imports
+from utils.utils_pytorch import load_model, save_model
 
 
 def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
@@ -108,7 +107,7 @@ def run_training(logger, args):
 
     # load weights, where applicable
     if args.use_pretrained:
-        model = load_model(args.pretrained_weights)
+        model = load_model(args.pretrained_model_name)
 
     # get data loaders
     train_loader = get_dataloader(args.batch_size, is_train=True, to_shuffle=True)
