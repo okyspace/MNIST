@@ -16,7 +16,16 @@ from utils.utils_pytorch import load_model, save_model
 
 ##### Public Functions #####
 def run_training(logger, args):
-    """Main training / testing orchestration function"""
+    """
+    Main training / testing orchestration function
+
+    Parameters
+    ----------
+    logger: Logger
+        Logger object for logging status messages.
+    args: object
+        List of arguments required to run the training/testing process.
+    """
     torch.manual_seed(args.seed)
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -50,7 +59,26 @@ def run_training(logger, args):
 
 
 def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
-    """Default training function as taken from ClearML examples."""
+    """
+    Default training function as taken from ClearML examples.
+
+    Parameters
+    ----------
+    model: object
+        Neural network model for training.
+    device: str
+        "cuda" or "cpu".
+    train_loader: object
+        Training data.
+    optimizer: object
+        Neural network optimizer object.
+    epoch: int
+        Current epoch number.
+    log_interval: int
+        Determines frequency of logging messages.
+    logger: Logger
+        Logger object for logging status messages.
+    """
     print(f"epoch {epoch}")
     save_loss = []
 
@@ -59,7 +87,7 @@ def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = _compute_loss(output, target)
+        loss = compute_loss(output, target)
         loss.backward()
         save_loss.append(loss)
 
@@ -82,7 +110,22 @@ def train(model, device, train_loader, optimizer, epoch, log_interval, logger):
 
 
 def test(model, device, test_loader, epoch, logger):
-    """Default testing function as taken from ClearML examples."""
+    """
+    Default testing function as taken from ClearML examples.
+
+    Parameters
+    ----------
+    model: object
+        Neural network model for testing.
+    device: str
+        "cuda" or "cpu".
+    test_loader: object
+        Testing data.
+    epoch: int
+        Current epoch number.
+    logger: Logger
+        Logger object for logging status messages.
+    """
     save_test_loss = []
     save_correct = []
 
@@ -118,6 +161,20 @@ def test(model, device, test_loader, epoch, logger):
     )
 
 
+def compute_loss(output, target):
+    """
+    Computes the loss between prediction and actual target values.
+
+    Parameters
+    ----------
+    output: object
+        model predictions
+    target: object
+        actual target labels
+    """
+    return torch_fn.nll_loss(output, target)
+
+
 ##### Private Functions #####
 def _calculate_percent(value):
     return 100.0 * value
@@ -133,9 +190,3 @@ def _print_test_step(loss, correct_samples, total_samples, percent_correct):
 
 def _get_optimizer(model, learn_rate, momentum):
     return optim.SGD(model.parameters(), lr=learn_rate, momentum=momentum)
-
-
-def _compute_loss(output, target):
-    # in complex case, some codes needed to extract/process data before computing the loss, thus keep it in a method
-    # this method will also define the loss function
-    return torch_fn.nll_loss(output, target)
