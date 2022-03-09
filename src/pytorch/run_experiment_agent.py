@@ -7,9 +7,9 @@ To enable this code to run you will need to do the following:
 """
 import os
 from clearml import Task, Logger
-from config_aip import cfg_clearml, cfg_s3
-from run_training import run_training
-from args_training import get_args
+from pytorch.config_aip import cfg_clearml, cfg_s3
+from pytorch.run_training import run_training
+from pytorch.args_training import get_args
 
 
 def main():
