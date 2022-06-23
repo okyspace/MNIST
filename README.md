@@ -15,3 +15,7 @@ Purposes:
 
 # E2E flow
 https://docs.google.com/presentation/d/1AS7s-hTxcK2ec1ULZ1K_yubbBXipRdWQ2Gk6a46SJQE/edit#slide=id.g10bb7c7143d_0_50
+
+# python docstring 
+- Adopted numpy-style. 
+- There are 3 available styles https://queirozf.com/entries/python-docstrings-reference-examples#numpy-style. 
